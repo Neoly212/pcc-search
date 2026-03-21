@@ -13,7 +13,6 @@
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Noto Serif TC', serif; background: var(--paper); color: var(--ink); min-height: 100vh; }
-
   header {
     background: var(--ink); color: var(--paper);
     padding: 22px 32px 18px; border-bottom: 4px solid var(--accent);
@@ -31,11 +30,11 @@
   header h1 { font-size: 22px; font-weight: 700; letter-spacing: 2px; }
   header p { font-size: 11px; opacity: 0.4; font-family: 'Space Mono', monospace; margin-top: 4px; }
 
-  /* connection status bar */
   .conn-bar {
     padding: 8px 32px; font-family: 'Space Mono', monospace; font-size: 11px;
     display: flex; align-items: center; gap: 8px;
     background: #fff3cd; border-bottom: 1px solid #ffc107; color: #856404;
+    transition: all 0.3s;
   }
   .conn-bar.ok  { background: #d1e7dd; border-color: #a3cfbb; color: #0f5132; }
   .conn-bar.err { background: #f8d7da; border-color: #f5c2c7; color: #842029; }
@@ -63,27 +62,25 @@
   .btn {
     padding: 9px 20px; font-family: 'Noto Serif TC', serif; font-size: 14px;
     font-weight: 700; border: none; border-radius: 4px; cursor: pointer;
-    transition: all 0.15s; white-space: nowrap; letter-spacing: 0.5px;
+    transition: all 0.15s; white-space: nowrap;
   }
   .btn-primary { background: var(--accent); color: #fff; }
   .btn-primary:hover { background: #a93226; }
   .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
   .btn-ghost { background: transparent; color: var(--muted); border: 1.5px solid var(--border); }
   .btn-ghost:hover { border-color: var(--muted); }
-  .hint { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--muted); }
+  .hint { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--muted); margin-top: 8px; }
   .hint span { color: var(--accent); }
 
-  /* status */
   .status-strip {
     display: none; padding: 9px 32px; background: #fff8e1;
     border-bottom: 1px solid #ffe082; font-family: 'Space Mono', monospace;
     font-size: 12px; color: #795548; align-items: center; gap: 8px;
   }
   .status-strip.show { display: flex; }
-  .spinner { width: 13px; height: 13px; border: 2px solid #ccc; border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
+  .spinner { width: 13px; height: 13px; border: 2px solid #ccc; border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; flex-shrink: 0; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* tabs */
   .tabs-bar { padding: 0 32px; background: var(--card-bg); border-bottom: 2px solid var(--border); display: flex; }
   .tab-btn {
     padding: 11px 20px; font-family: 'Noto Serif TC', serif; font-size: 13px; font-weight: 700;
@@ -98,7 +95,6 @@
   }
   .tab-btn.active .count-badge { background: var(--accent); color: #fff; }
 
-  /* results */
   .results-area { padding: 22px 32px; max-width: 1040px; }
   .section-header {
     display: flex; align-items: baseline; gap: 10px;
@@ -125,7 +121,7 @@
   .card-title a { color: var(--ink); text-decoration: none; }
   .card-title a:hover { color: var(--accent); }
   .card-meta { display: flex; flex-wrap: wrap; gap: 5px 18px; margin-bottom: 9px; }
-  .meta-item { display: flex; flex-direction: column; gap: 2px; }
+  .meta-item { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
   .meta-label { font-family: 'Space Mono', monospace; font-size: 9px; color: #bbb; text-transform: uppercase; letter-spacing: 1px; }
   .meta-value { color: var(--ink); font-weight: 600; font-size: 13px; }
   .meta-value.price { color: var(--accent); font-family: 'Space Mono', monospace; }
@@ -149,7 +145,7 @@
   }
   @keyframes lslide { 0% { transform: translateX(-100%); } 100% { transform: translateX(350%); } }
 
-  .pagination { display: flex; gap: 6px; align-items: center; margin-top: 18px; justify-content: center; }
+  .pagination { display: flex; gap: 6px; align-items: center; margin-top: 18px; justify-content: center; flex-wrap: wrap; }
   .page-btn {
     padding: 5px 11px; border: 1.5px solid var(--border); background: var(--card-bg);
     color: var(--ink); font-family: 'Space Mono', monospace; font-size: 12px;
@@ -167,16 +163,14 @@
 </style>
 </head>
 <body>
-
 <div class="loading-bar" id="loadingBar"></div>
 
 <header>
   <div class="badge">GOV PROCUREMENT · TW</div>
   <h1>政府採購查詢系統</h1>
-  <p>資料來源：pcc.g0v.ronny.tw ／ 政府電子採購網</p>
+  <p>資料來源：pcc.mlwmlw.org ／ 政府電子採購網</p>
 </header>
 
-<!-- Connection status — checked on load -->
 <div class="conn-bar" id="connBar">
   <div class="conn-dot"></div>
   <span id="connText">檢測 API 連線中…</span>
@@ -207,11 +201,11 @@
       </select>
     </div>
   </div>
-  <div class="btn-row" style="margin-bottom:10px">
+  <div class="btn-row">
     <button class="btn btn-primary" id="searchBtn" onclick="doSearch()">搜　尋</button>
     <button class="btn btn-ghost" onclick="resetSearch()">清除</button>
   </div>
-  <div class="hint">💡 廠商名稱支援<span>模糊搜尋</span>（輸入部分名稱即可）；標案關鍵字可用<span>空格</span>分隔多個條件</div>
+  <div class="hint">💡 廠商名稱支援<span>模糊搜尋</span>（輸入部分名稱即可）；標案可用<span>空格</span>分隔多個關鍵字</div>
 </div>
 
 <div class="status-strip" id="statusStrip">
@@ -237,32 +231,34 @@
 </div>
 
 <script>
-const API = 'https://pcc.g0v.ronny.tw/api';
+// pcc.mlwmlw.org API endpoints:
+// GET /api/keyword/:keyword  → 關鍵字搜尋標案（含決標+招標）
+// GET /api/date/award/:date  → 某日決標
+// GET /api/date/tender/:date → 某日招標
+const API = 'https://pcc.mlwmlw.org/api';
 const PAGE_SIZE = 10;
 let currentTab = 'awarded';
 let awardedData = [], tenderData = [];
 let awardedPage = 1, tenderPage = 1;
 
-// ── Connection check on load ───────────────────────────────────────────────
-async function checkConnection() {
-  const bar  = document.getElementById('connBar');
-  const text = document.getElementById('connText');
+// ── Connection check ───────────────────────────────────────────────────────
+async function checkConn() {
+  const bar = document.getElementById('connBar');
+  const txt = document.getElementById('connText');
   try {
-    const r = await fetch(`${API}/searchbytitle?query=test&page=1`, { signal: AbortSignal.timeout(6000) });
-    if (r.ok) {
+    const r = await fetch(`${API}/keyword/test`, { signal: AbortSignal.timeout(8000) });
+    if (r.ok || r.status === 404) {
       bar.className = 'conn-bar ok';
-      text.textContent = '✓ API 連線正常，可以開始搜尋';
-    } else {
-      throw new Error('HTTP ' + r.status);
-    }
+      txt.textContent = '✓ API 連線正常，可以開始搜尋';
+    } else throw new Error('HTTP ' + r.status);
   } catch(e) {
     bar.className = 'conn-bar err';
-    text.textContent = '✗ 無法連線到 pcc.g0v.ronny.tw — 請確認網路，或此檔案是否在本機瀏覽器開啟（不能在 claude.ai 內使用）';
+    txt.textContent = '✗ 無法連線 API — 請確認網路連線，或此頁面未在本機/公開網站開啟';
   }
 }
-checkConnection();
+checkConn();
 
-// ── UI helpers ─────────────────────────────────────────────────────────────
+// ── Helpers ────────────────────────────────────────────────────────────────
 function setLoading(on) {
   document.getElementById('loadingBar').classList.toggle('active', on);
   document.getElementById('searchBtn').disabled = on;
@@ -272,64 +268,49 @@ function setLoading(on) {
 function setStatus(msg) { document.getElementById('statusText').textContent = msg; }
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function cut(s,n) { s=String(s||''); return s.length>n?s.slice(0,n)+'…':s; }
-function fmtMoney(n) { const m=Number(n); return(!m||isNaN(m))?'–':'$\u00a0'+m.toLocaleString('zh-TW')+'\u00a0元'; }
+function fmtMoney(n) {
+  const m = Number(n);
+  return (!m || isNaN(m)) ? '–' : '$ ' + m.toLocaleString('zh-TW') + ' 元';
+}
 
-// ── Field extractors — handles the inconsistent API structure ──────────────
-function getTitle(r)   { return r?.brief?.title || r?.title || ''; }
-function getDate(r)    { return r?.date || r?.brief?.date || ''; }
-function getSpec(r)    { const b=r?.brief||{}; return b.brief||b.description||b.spec||b.note||''; }
-function getMethod(r)  { const b=r?.brief||{}; return b.procurement_method||b.tender_method||b.type_name||''; }
-
-// brief.type === 'awarding' means 決標; everything else is 招標
-function isAwarded(r)  { return String(r?.brief?.type||'').toLowerCase()==='awarding'; }
-
+// ── Field extractors for pcc.mlwmlw.org data format ───────────────────────
+// Their API returns: { id, title, unit, type, date, price, merchants:[{name,amount}], ... }
+function getTitle(r)     { return r.title || r.name || ''; }
+function getDate(r)      { return r.date || r.start_date || ''; }
+function getUnit(r)      { return r.unit || r.unit_name || ''; }
+function isAwarded(r)    {
+  const t = String(r.type || r.category || '').toLowerCase();
+  // mlwmlw API: type "決標公告" or "awarding"
+  return t.includes('決標') || t === 'awarding' || t === 'award';
+}
 function getAmount(r) {
-  const b=r?.brief||{};
-  for (const k of ['total_amount','awarded_amount','amount','real_total_price','decide_price']) {
-    const n=Number(b[k]); if(n>0&&!isNaN(n)) return fmtMoney(n);
+  // For awarded: sum of merchant amounts, or total price
+  if (r.merchants && r.merchants.length) {
+    const total = r.merchants.reduce((s,m) => s + Number(m.amount||0), 0);
+    if (total > 0) return fmtMoney(total);
   }
-  for (const c of (b.companies||[])) {
-    const n=Number(c.amount||c.total_amount||0); if(n>0) return fmtMoney(n);
-  }
-  return '–';
+  return fmtMoney(r.price || r.budget || r.amount);
 }
-function getBudget(r) {
-  const b=r?.brief||{};
-  for (const k of ['budget_amount','budget','price','unit_price','amount']) {
-    const n=Number(b[k]); if(n>0&&!isNaN(n)) return fmtMoney(n);
-  }
-  return '–';
-}
+function getBudget(r)    { return fmtMoney(r.price || r.budget || r.amount); }
 function getCompanies(r) {
-  const b=r?.brief||{};
-  if (b.companies?.length) return b.companies.map(c=>c.name||'').filter(Boolean).join('、');
-  return b.company_name||b.vendor||'';
+  if (r.merchants && r.merchants.length)
+    return r.merchants.map(m => m.name || '').filter(Boolean).join('、');
+  return r.merchant || r.company || '';
 }
+function getMethod(r)    { return r.method || r.procurement_method || r.tender_method || ''; }
+function getSpec(r)      { return r.brief || r.description || r.spec || ''; }
 function getLink(r) {
-  if (r?.unit_id&&r?.job_number)
+  if (r.url) return r.url;
+  if (r.unit_id && r.job_number)
     return `https://web.pcc.gov.tw/tps/pss/tender.do?newEdit=false&searchMode=common&pk=${encodeURIComponent(r.unit_id+r.job_number)}`;
   return '#';
 }
 
-// ── Fetch helpers ──────────────────────────────────────────────────────────
-async function fetchPage(url) {
-  const r = await fetch(url, { signal: AbortSignal.timeout(10000) });
-  if (!r.ok) throw new Error('HTTP '+r.status);
+// ── API fetch ──────────────────────────────────────────────────────────────
+async function apiFetch(url) {
+  const r = await fetch(url, { signal: AbortSignal.timeout(12000) });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
   return r.json();
-}
-
-// Fetch up to maxPages from an endpoint, return all records
-async function fetchAll(baseUrl, maxPages=3) {
-  let all=[];
-  for (let p=1;p<=maxPages;p++) {
-    try {
-      const d = await fetchPage(`${baseUrl}&page=${p}`);
-      const rows = d?.records || d?.data || [];
-      all = all.concat(rows);
-      if (rows.length<10) break; // no more pages
-    } catch(e) { console.warn('fetchAll page',p,e); break; }
-  }
-  return all;
 }
 
 // ── Main search ────────────────────────────────────────────────────────────
@@ -337,56 +318,65 @@ async function doSearch() {
   const rawQ    = document.getElementById('queryInput').value.trim();
   const company = document.getElementById('companyInput').value.trim();
   const year    = document.getElementById('yearSelect').value;
-  if (!rawQ&&!company) { alert('請輸入標案關鍵字或廠商名稱'); return; }
+
+  if (!rawQ && !company) { alert('請輸入標案關鍵字或廠商名稱'); return; }
 
   setLoading(true);
-  awardedData=[]; tenderData=[];
-  awardedPage=1; tenderPage=1;
+  awardedData = []; tenderData = [];
+  awardedPage = 1; tenderPage = 1;
 
   try {
     const tokens = rawQ.split(/\s+/).filter(Boolean);
-    let raw=[];
-    const seen=new Set();
+    let raw = [];
+    const seen = new Set();
 
     function merge(rows) {
+      if (!Array.isArray(rows)) return;
       for (const r of rows) {
-        const k=(r.unit_id||'')+(r.job_number||'');
-        if (!seen.has(k)) { seen.add(k); raw.push(r); }
+        const k = r.id || (r.unit_id + r.job_number) || r.title;
+        if (k && seen.has(k)) continue;
+        if (k) seen.add(k);
+        raw.push(r);
       }
     }
 
-    // ── 1. Search by title (標案名稱) ──────────────────────────────────────
+    // ── Search by title keyword ────────────────────────────────────────────
     if (rawQ) {
       setStatus(`搜尋標案「${tokens[0]}」…`);
-      merge(await fetchAll(`${API}/searchbytitle?query=${encodeURIComponent(tokens[0])}`));
+      try {
+        const d = await apiFetch(`${API}/keyword/${encodeURIComponent(tokens[0])}`);
+        // API may return array directly or { data: [...] }
+        merge(Array.isArray(d) ? d : (d.data || d.records || []));
+      } catch(e) { console.warn('keyword search failed:', e.message); }
     }
 
-    // ── 2. Search by company name (廠商名稱) ──────────────────────────────
-    // API searchbycompanyname needs a close match, so we also search by title
-    // using the company name as keyword to catch more results
+    // ── Search by company name ─────────────────────────────────────────────
     if (company) {
       setStatus(`搜尋廠商「${company}」…`);
-      // Try exact company endpoint
-      merge(await fetchAll(`${API}/searchbycompanyname?query=${encodeURIComponent(company)}`));
-      // Also search by title with company name as keyword (catches more results)
-      merge(await fetchAll(`${API}/searchbytitle?query=${encodeURIComponent(company)}`));
+      try {
+        const d = await apiFetch(`${API}/keyword/${encodeURIComponent(company)}`);
+        merge(Array.isArray(d) ? d : (d.data || d.records || []));
+      } catch(e) { console.warn('company search failed:', e.message); }
     }
 
-    // ── 3. Client-side fuzzy filter ────────────────────────────────────────
-    setStatus('套用篩選…');
+    // ── Client-side fuzzy filter ───────────────────────────────────────────
+    setStatus('套用篩選條件…');
     const filtered = raw.filter(r => {
       const blob = JSON.stringify(r).toLowerCase();
 
-      // All title tokens must match somewhere in the record
+      // All title tokens must appear
       for (const t of tokens) {
         if (!blob.includes(t.toLowerCase())) return false;
       }
 
-      // Company: substring match — "正茂生物" matches "正茂生物科技股份有限公司"
+      // Company substring match (模糊)
       if (company && !blob.includes(company.toLowerCase())) return false;
 
       // Year filter
-      if (year && !getDate(r).startsWith(year)) return false;
+      if (year) {
+        const d = getDate(r);
+        if (!d || !String(d).includes(year)) return false;
+      }
 
       return true;
     });
@@ -398,12 +388,12 @@ async function doSearch() {
     document.getElementById('tenderCount').textContent  = tenderData.length;
     document.getElementById('tabsBar').style.display = 'flex';
 
-    currentTab = (awardedData.length===0&&tenderData.length>0) ? 'tender' : 'awarded';
+    currentTab = (awardedData.length === 0 && tenderData.length > 0) ? 'tender' : 'awarded';
     updateTabs();
     renderResults();
 
   } catch(e) {
-    showError('搜尋失敗：'+e.message+'<br><small>請確認此檔案是用瀏覽器直接開啟（不能在 claude.ai 內使用）</small>');
+    showError('搜尋失敗：' + e.message);
   } finally {
     setLoading(false);
   }
@@ -411,94 +401,104 @@ async function doSearch() {
 
 // ── Render ─────────────────────────────────────────────────────────────────
 function renderResults() {
-  const data = currentTab==='awarded'?awardedData:tenderData;
-  const page = currentTab==='awarded'?awardedPage:tenderPage;
+  const data = currentTab === 'awarded' ? awardedData : tenderData;
+  const page = currentTab === 'awarded' ? awardedPage : tenderPage;
   const area = document.getElementById('resultsArea');
 
   if (!data.length) {
-    area.innerHTML=`<div class="state-box">
+    area.innerHTML = `<div class="state-box">
       <div class="state-icon">${currentTab==='awarded'?'📋':'📢'}</div>
       <div class="state-text">無符合的${currentTab==='awarded'?'決標':'招標'}公告</div>
       <div class="state-sub">可切換頁籤或調整關鍵字再試</div>
     </div>`; return;
   }
 
-  const start=(page-1)*PAGE_SIZE, slice=data.slice(start,start+PAGE_SIZE);
-  const total=Math.ceil(data.length/PAGE_SIZE);
+  const start = (page-1)*PAGE_SIZE;
+  const slice = data.slice(start, start+PAGE_SIZE);
+  const total = Math.ceil(data.length/PAGE_SIZE);
 
-  let html=`<div class="section-header">
+  let html = `<div class="section-header">
     <span class="section-title">${currentTab==='awarded'?'✦ 決標公告':'◈ 招標公告'}</span>
     <span class="section-meta">共 ${data.length} 筆 ／ 第 ${page}/${total} 頁</span>
   </div>`;
 
-  slice.forEach(r=>{ html += currentTab==='awarded'?cardAwarded(r):cardTender(r); });
+  slice.forEach(r => { html += currentTab==='awarded' ? cardAwarded(r) : cardTender(r); });
 
-  if (total>1) {
-    html+=`<div class="pagination">`;
-    html+=`<button class="page-btn" onclick="go(${page-1})" ${page<=1?'disabled':''}>←</button>`;
-    let dot=false;
-    for(let i=1;i<=total;i++){
-      if(i===1||i===total||Math.abs(i-page)<=2){dot=false;html+=`<button class="page-btn ${i===page?'active':''}" onclick="go(${i})">${i}</button>`;}
-      else if(!dot){dot=true;html+=`<span style="padding:0 4px;color:var(--muted)">…</span>`;}
+  if (total > 1) {
+    html += `<div class="pagination">`;
+    html += `<button class="page-btn" onclick="go(${page-1})" ${page<=1?'disabled':''}>←</button>`;
+    let dot = false;
+    for (let i=1; i<=total; i++) {
+      if (i===1||i===total||Math.abs(i-page)<=2) {
+        dot=false;
+        html+=`<button class="page-btn ${i===page?'active':''}" onclick="go(${i})">${i}</button>`;
+      } else if (!dot) { dot=true; html+=`<span style="padding:0 4px;color:var(--muted)">…</span>`; }
     }
-    html+=`<button class="page-btn" onclick="go(${page+1})" ${page>=total?'disabled':''}>→</button></div>`;
+    html += `<button class="page-btn" onclick="go(${page+1})" ${page>=total?'disabled':''}>→</button></div>`;
   }
-  html+=`<div class="notice">資料來源：pcc.g0v.ronny.tw ／ 政府電子採購網 ／ 僅供參考，請以官方網站為準</div>`;
-  area.innerHTML=html;
+  html += `<div class="notice">資料來源：pcc.mlwmlw.org ／ 政府電子採購網 ／ 僅供參考，請以官方網站為準</div>`;
+  area.innerHTML = html;
 }
 
 function cardAwarded(r) {
-  const spec=getSpec(r);
+  const cos  = getCompanies(r);
+  const spec = getSpec(r);
+  const unit = getUnit(r);
   return `<div class="card card-awarded">
     <span class="card-tag tag-awarded">決　標</span>
     <div class="card-title"><a href="${esc(getLink(r))}" target="_blank">${esc(getTitle(r)||'(無標題)')}</a></div>
     <div class="card-meta">
       <div class="meta-item"><span class="meta-label">決標日期</span><span class="meta-value">${esc(getDate(r)||'–')}</span></div>
       <div class="meta-item"><span class="meta-label">決標金額</span><span class="meta-value price">${getAmount(r)}</span></div>
-      <div class="meta-item"><span class="meta-label">決標廠商</span><span class="meta-value company">${esc(getCompanies(r)||'–')}</span></div>
+      <div class="meta-item"><span class="meta-label">決標廠商</span><span class="meta-value company">${esc(cos||'–')}</span></div>
+      ${unit?`<div class="meta-item"><span class="meta-label">機關</span><span class="meta-value">${esc(unit)}</span></div>`:''}
     </div>
     ${spec?`<div class="card-spec"><div class="spec-label">規格摘要</div>${esc(cut(spec,280))}</div>`:''}
   </div>`;
 }
+
 function cardTender(r) {
-  const spec=getSpec(r);
+  const spec  = getSpec(r);
+  const unit  = getUnit(r);
+  const method = getMethod(r);
   return `<div class="card card-tender">
     <span class="card-tag tag-tender">招　標</span>
     <div class="card-title"><a href="${esc(getLink(r))}" target="_blank">${esc(getTitle(r)||'(無標題)')}</a></div>
     <div class="card-meta">
       <div class="meta-item"><span class="meta-label">公告日期</span><span class="meta-value">${esc(getDate(r)||'–')}</span></div>
       <div class="meta-item"><span class="meta-label">公告金額</span><span class="meta-value price">${getBudget(r)}</span></div>
-      <div class="meta-item"><span class="meta-label">招標方式</span><span class="meta-value">${esc(getMethod(r)||'–')}</span></div>
+      ${method?`<div class="meta-item"><span class="meta-label">招標方式</span><span class="meta-value">${esc(method)}</span></div>`:''}
+      ${unit?`<div class="meta-item"><span class="meta-label">機關</span><span class="meta-value">${esc(unit)}</span></div>`:''}
     </div>
     ${spec?`<div class="card-spec"><div class="spec-label">規格摘要</div>${esc(cut(spec,280))}</div>`:''}
   </div>`;
 }
 
-function go(p){if(currentTab==='awarded')awardedPage=p;else tenderPage=p;renderResults();window.scrollTo({top:0,behavior:'smooth'});}
-function switchTab(t){currentTab=t;if(t==='awarded')awardedPage=1;else tenderPage=1;updateTabs();renderResults();}
-function updateTabs(){
-  document.getElementById('tab-awarded').classList.toggle('active',currentTab==='awarded');
-  document.getElementById('tab-tender').classList.toggle('active',currentTab==='tender');
+function go(p) { if(currentTab==='awarded')awardedPage=p;else tenderPage=p; renderResults(); window.scrollTo({top:0,behavior:'smooth'}); }
+function switchTab(t) { currentTab=t; if(t==='awarded')awardedPage=1;else tenderPage=1; updateTabs(); renderResults(); }
+function updateTabs() {
+  document.getElementById('tab-awarded').classList.toggle('active', currentTab==='awarded');
+  document.getElementById('tab-tender').classList.toggle('active',  currentTab==='tender');
 }
-function showError(msg){
-  document.getElementById('resultsArea').innerHTML=`<div class="state-box">
+function showError(msg) {
+  document.getElementById('resultsArea').innerHTML = `<div class="state-box">
     <div class="state-icon">⚠️</div>
     <div class="state-text">查詢失敗</div>
-    <div class="state-sub">${msg}</div>
+    <div class="state-sub">${esc(msg)}</div>
   </div>`;
 }
-function resetSearch(){
-  ['queryInput','companyInput'].forEach(id=>document.getElementById(id).value='');
+function resetSearch() {
+  ['queryInput','companyInput'].forEach(id => document.getElementById(id).value='');
   document.getElementById('yearSelect').value='';
   document.getElementById('tabsBar').style.display='none';
-  awardedData=[];tenderData=[];
+  awardedData=[]; tenderData=[];
   document.getElementById('resultsArea').innerHTML=`<div class="state-box">
     <div class="state-icon">🔍</div>
     <div class="state-text">輸入關鍵字開始搜尋</div>
     <div class="state-sub">標案關鍵字 ／ 廠商名稱 ／ 年份 可單獨或組合使用</div>
   </div>`;
 }
-document.addEventListener('keydown',e=>{if(e.key==='Enter'&&!document.getElementById('searchBtn').disabled)doSearch();});
+document.addEventListener('keydown', e => { if(e.key==='Enter'&&!document.getElementById('searchBtn').disabled) doSearch(); });
 </script>
 </body>
 </html>
