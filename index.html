@@ -121,7 +121,7 @@
   .card-title a { color: var(--ink); text-decoration: none; }
   .card-title a:hover { color: var(--accent); }
   .card-meta { display: flex; flex-wrap: wrap; gap: 5px 18px; margin-bottom: 9px; }
-  .meta-item { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .meta-item { display: flex; flex-direction: column; gap: 2px; }
   .meta-label { font-family: 'Space Mono', monospace; font-size: 9px; color: #bbb; text-transform: uppercase; letter-spacing: 1px; }
   .meta-value { color: var(--ink); font-weight: 600; font-size: 13px; }
   .meta-value.price { color: var(--accent); font-family: 'Space Mono', monospace; }
@@ -164,11 +164,10 @@
 </head>
 <body>
 <div class="loading-bar" id="loadingBar"></div>
-
 <header>
   <div class="badge">GOV PROCUREMENT · TW</div>
   <h1>政府採購查詢系統</h1>
-  <p>資料來源：pcc.mlwmlw.org ／ 政府電子採購網</p>
+  <p>資料來源：政府電子採購網 pcc.mlwmlw.org</p>
 </header>
 
 <div class="conn-bar" id="connBar">
@@ -231,34 +230,29 @@
 </div>
 
 <script>
-// pcc.mlwmlw.org API endpoints:
-// GET /api/keyword/:keyword  → 關鍵字搜尋標案（含決標+招標）
-// GET /api/date/award/:date  → 某日決標
-// GET /api/date/tender/:date → 某日招標
-const API = 'https://pcc.mlwmlw.org/api';
+// proxy 路徑：/api/proxy/keyword/xxx → Vercel function → pcc.mlwmlw.org/api/keyword/xxx
+const PROXY = '/api/proxy';
 const PAGE_SIZE = 10;
 let currentTab = 'awarded';
 let awardedData = [], tenderData = [];
 let awardedPage = 1, tenderPage = 1;
 
-// ── Connection check ───────────────────────────────────────────────────────
 async function checkConn() {
   const bar = document.getElementById('connBar');
   const txt = document.getElementById('connText');
   try {
-    const r = await fetch(`${API}/keyword/test`, { signal: AbortSignal.timeout(8000) });
-    if (r.ok || r.status === 404) {
+    const r = await fetch(`${PROXY}/keyword/test`, { signal: AbortSignal.timeout(8000) });
+    if (r.ok || r.status === 404 || r.status === 200) {
       bar.className = 'conn-bar ok';
       txt.textContent = '✓ API 連線正常，可以開始搜尋';
     } else throw new Error('HTTP ' + r.status);
   } catch(e) {
     bar.className = 'conn-bar err';
-    txt.textContent = '✗ 無法連線 API — 請確認網路連線，或此頁面未在本機/公開網站開啟';
+    txt.textContent = '✗ 無法連線 — 請確認網頁是透過 Vercel 網址開啟（不是 GitHub Pages）';
   }
 }
 checkConn();
 
-// ── Helpers ────────────────────────────────────────────────────────────────
 function setLoading(on) {
   document.getElementById('loadingBar').classList.toggle('active', on);
   document.getElementById('searchBtn').disabled = on;
@@ -268,62 +262,52 @@ function setLoading(on) {
 function setStatus(msg) { document.getElementById('statusText').textContent = msg; }
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function cut(s,n) { s=String(s||''); return s.length>n?s.slice(0,n)+'…':s; }
-function fmtMoney(n) {
-  const m = Number(n);
-  return (!m || isNaN(m)) ? '–' : '$ ' + m.toLocaleString('zh-TW') + ' 元';
-}
+function fmtMoney(n) { const m=Number(n); return(!m||isNaN(m))?'–':'$ '+m.toLocaleString('zh-TW')+' 元'; }
 
-// ── Field extractors for pcc.mlwmlw.org data format ───────────────────────
-// Their API returns: { id, title, unit, type, date, price, merchants:[{name,amount}], ... }
-function getTitle(r)     { return r.title || r.name || ''; }
-function getDate(r)      { return r.date || r.start_date || ''; }
-function getUnit(r)      { return r.unit || r.unit_name || ''; }
-function isAwarded(r)    {
-  const t = String(r.type || r.category || '').toLowerCase();
-  // mlwmlw API: type "決標公告" or "awarding"
-  return t.includes('決標') || t === 'awarding' || t === 'award';
+function getTitle(r)   { return r.title||r.name||''; }
+function getDate(r)    { return r.date||r.start_date||''; }
+function getUnit(r)    { return r.unit||r.unit_name||''; }
+function getSpec(r)    { return r.brief||r.description||r.spec||''; }
+function getMethod(r)  { return r.method||r.procurement_method||''; }
+function isAwarded(r)  {
+  const t = String(r.type||r.category||'').toLowerCase();
+  return t.includes('決標') || t==='awarding' || t==='award';
 }
 function getAmount(r) {
-  // For awarded: sum of merchant amounts, or total price
-  if (r.merchants && r.merchants.length) {
-    const total = r.merchants.reduce((s,m) => s + Number(m.amount||0), 0);
-    if (total > 0) return fmtMoney(total);
+  if (r.merchants?.length) {
+    const total = r.merchants.reduce((s,m)=>s+Number(m.amount||0),0);
+    if (total>0) return fmtMoney(total);
   }
-  return fmtMoney(r.price || r.budget || r.amount);
+  return fmtMoney(r.price||r.budget||r.amount);
 }
-function getBudget(r)    { return fmtMoney(r.price || r.budget || r.amount); }
 function getCompanies(r) {
-  if (r.merchants && r.merchants.length)
-    return r.merchants.map(m => m.name || '').filter(Boolean).join('、');
-  return r.merchant || r.company || '';
+  if (r.merchants?.length) return r.merchants.map(m=>m.name||'').filter(Boolean).join('、');
+  return r.merchant||r.company||'';
 }
-function getMethod(r)    { return r.method || r.procurement_method || r.tender_method || ''; }
-function getSpec(r)      { return r.brief || r.description || r.spec || ''; }
 function getLink(r) {
   if (r.url) return r.url;
-  if (r.unit_id && r.job_number)
+  if (r.unit_id&&r.job_number)
     return `https://web.pcc.gov.tw/tps/pss/tender.do?newEdit=false&searchMode=common&pk=${encodeURIComponent(r.unit_id+r.job_number)}`;
+  if (r.id) return `https://pcc.mlwmlw.org/tender/${encodeURIComponent(r.unit||'')}/${r.id}`;
   return '#';
 }
 
-// ── API fetch ──────────────────────────────────────────────────────────────
 async function apiFetch(url) {
   const r = await fetch(url, { signal: AbortSignal.timeout(12000) });
   if (!r.ok) throw new Error('HTTP ' + r.status);
-  return r.json();
+  const text = await r.text();
+  try { return JSON.parse(text); } catch { return []; }
 }
 
-// ── Main search ────────────────────────────────────────────────────────────
 async function doSearch() {
   const rawQ    = document.getElementById('queryInput').value.trim();
   const company = document.getElementById('companyInput').value.trim();
   const year    = document.getElementById('yearSelect').value;
-
-  if (!rawQ && !company) { alert('請輸入標案關鍵字或廠商名稱'); return; }
+  if (!rawQ&&!company) { alert('請輸入標案關鍵字或廠商名稱'); return; }
 
   setLoading(true);
-  awardedData = []; tenderData = [];
-  awardedPage = 1; tenderPage = 1;
+  awardedData=[]; tenderData=[];
+  awardedPage=1; tenderPage=1;
 
   try {
     const tokens = rawQ.split(/\s+/).filter(Boolean);
@@ -333,51 +317,35 @@ async function doSearch() {
     function merge(rows) {
       if (!Array.isArray(rows)) return;
       for (const r of rows) {
-        const k = r.id || (r.unit_id + r.job_number) || r.title;
+        const k = r.id || r.title;
         if (k && seen.has(k)) continue;
         if (k) seen.add(k);
         raw.push(r);
       }
     }
 
-    // ── Search by title keyword ────────────────────────────────────────────
     if (rawQ) {
       setStatus(`搜尋標案「${tokens[0]}」…`);
       try {
-        const d = await apiFetch(`${API}/keyword/${encodeURIComponent(tokens[0])}`);
-        // API may return array directly or { data: [...] }
-        merge(Array.isArray(d) ? d : (d.data || d.records || []));
-      } catch(e) { console.warn('keyword search failed:', e.message); }
+        const d = await apiFetch(`${PROXY}/keyword/${encodeURIComponent(tokens[0])}`);
+        merge(Array.isArray(d) ? d : (d.data||d.records||[]));
+      } catch(e) { console.warn('title search:', e.message); }
     }
 
-    // ── Search by company name ─────────────────────────────────────────────
     if (company) {
       setStatus(`搜尋廠商「${company}」…`);
       try {
-        const d = await apiFetch(`${API}/keyword/${encodeURIComponent(company)}`);
-        merge(Array.isArray(d) ? d : (d.data || d.records || []));
-      } catch(e) { console.warn('company search failed:', e.message); }
+        const d = await apiFetch(`${PROXY}/keyword/${encodeURIComponent(company)}`);
+        merge(Array.isArray(d) ? d : (d.data||d.records||[]));
+      } catch(e) { console.warn('company search:', e.message); }
     }
 
-    // ── Client-side fuzzy filter ───────────────────────────────────────────
     setStatus('套用篩選條件…');
     const filtered = raw.filter(r => {
       const blob = JSON.stringify(r).toLowerCase();
-
-      // All title tokens must appear
-      for (const t of tokens) {
-        if (!blob.includes(t.toLowerCase())) return false;
-      }
-
-      // Company substring match (模糊)
+      for (const t of tokens) { if (!blob.includes(t.toLowerCase())) return false; }
       if (company && !blob.includes(company.toLowerCase())) return false;
-
-      // Year filter
-      if (year) {
-        const d = getDate(r);
-        if (!d || !String(d).includes(year)) return false;
-      }
-
+      if (year && !String(getDate(r)).includes(year)) return false;
       return true;
     });
 
@@ -387,63 +355,51 @@ async function doSearch() {
     document.getElementById('awardedCount').textContent = awardedData.length;
     document.getElementById('tenderCount').textContent  = tenderData.length;
     document.getElementById('tabsBar').style.display = 'flex';
-
-    currentTab = (awardedData.length === 0 && tenderData.length > 0) ? 'tender' : 'awarded';
+    currentTab = (awardedData.length===0&&tenderData.length>0)?'tender':'awarded';
     updateTabs();
     renderResults();
 
   } catch(e) {
-    showError('搜尋失敗：' + e.message);
+    showError('搜尋失敗：'+e.message);
   } finally {
     setLoading(false);
   }
 }
 
-// ── Render ─────────────────────────────────────────────────────────────────
 function renderResults() {
-  const data = currentTab === 'awarded' ? awardedData : tenderData;
-  const page = currentTab === 'awarded' ? awardedPage : tenderPage;
+  const data = currentTab==='awarded'?awardedData:tenderData;
+  const page = currentTab==='awarded'?awardedPage:tenderPage;
   const area = document.getElementById('resultsArea');
-
   if (!data.length) {
-    area.innerHTML = `<div class="state-box">
+    area.innerHTML=`<div class="state-box">
       <div class="state-icon">${currentTab==='awarded'?'📋':'📢'}</div>
       <div class="state-text">無符合的${currentTab==='awarded'?'決標':'招標'}公告</div>
       <div class="state-sub">可切換頁籤或調整關鍵字再試</div>
     </div>`; return;
   }
-
-  const start = (page-1)*PAGE_SIZE;
-  const slice = data.slice(start, start+PAGE_SIZE);
-  const total = Math.ceil(data.length/PAGE_SIZE);
-
-  let html = `<div class="section-header">
+  const start=(page-1)*PAGE_SIZE, slice=data.slice(start,start+PAGE_SIZE);
+  const total=Math.ceil(data.length/PAGE_SIZE);
+  let html=`<div class="section-header">
     <span class="section-title">${currentTab==='awarded'?'✦ 決標公告':'◈ 招標公告'}</span>
     <span class="section-meta">共 ${data.length} 筆 ／ 第 ${page}/${total} 頁</span>
   </div>`;
-
-  slice.forEach(r => { html += currentTab==='awarded' ? cardAwarded(r) : cardTender(r); });
-
-  if (total > 1) {
-    html += `<div class="pagination">`;
-    html += `<button class="page-btn" onclick="go(${page-1})" ${page<=1?'disabled':''}>←</button>`;
-    let dot = false;
-    for (let i=1; i<=total; i++) {
-      if (i===1||i===total||Math.abs(i-page)<=2) {
-        dot=false;
-        html+=`<button class="page-btn ${i===page?'active':''}" onclick="go(${i})">${i}</button>`;
-      } else if (!dot) { dot=true; html+=`<span style="padding:0 4px;color:var(--muted)">…</span>`; }
+  slice.forEach(r=>{ html+=currentTab==='awarded'?cardAwarded(r):cardTender(r); });
+  if (total>1) {
+    html+=`<div class="pagination">`;
+    html+=`<button class="page-btn" onclick="go(${page-1})" ${page<=1?'disabled':''}>←</button>`;
+    let dot=false;
+    for(let i=1;i<=total;i++){
+      if(i===1||i===total||Math.abs(i-page)<=2){dot=false;html+=`<button class="page-btn ${i===page?'active':''}" onclick="go(${i})">${i}</button>`;}
+      else if(!dot){dot=true;html+=`<span style="padding:0 4px;color:var(--muted)">…</span>`;}
     }
-    html += `<button class="page-btn" onclick="go(${page+1})" ${page>=total?'disabled':''}>→</button></div>`;
+    html+=`<button class="page-btn" onclick="go(${page+1})" ${page>=total?'disabled':''}>→</button></div>`;
   }
-  html += `<div class="notice">資料來源：pcc.mlwmlw.org ／ 政府電子採購網 ／ 僅供參考，請以官方網站為準</div>`;
-  area.innerHTML = html;
+  html+=`<div class="notice">資料來源：pcc.mlwmlw.org ／ 政府電子採購網 ／ 僅供參考，請以官方網站為準</div>`;
+  area.innerHTML=html;
 }
 
 function cardAwarded(r) {
-  const cos  = getCompanies(r);
-  const spec = getSpec(r);
-  const unit = getUnit(r);
+  const cos=getCompanies(r), spec=getSpec(r), unit=getUnit(r);
   return `<div class="card card-awarded">
     <span class="card-tag tag-awarded">決　標</span>
     <div class="card-title"><a href="${esc(getLink(r))}" target="_blank">${esc(getTitle(r)||'(無標題)')}</a></div>
@@ -456,17 +412,14 @@ function cardAwarded(r) {
     ${spec?`<div class="card-spec"><div class="spec-label">規格摘要</div>${esc(cut(spec,280))}</div>`:''}
   </div>`;
 }
-
 function cardTender(r) {
-  const spec  = getSpec(r);
-  const unit  = getUnit(r);
-  const method = getMethod(r);
+  const spec=getSpec(r), unit=getUnit(r), method=getMethod(r);
   return `<div class="card card-tender">
     <span class="card-tag tag-tender">招　標</span>
     <div class="card-title"><a href="${esc(getLink(r))}" target="_blank">${esc(getTitle(r)||'(無標題)')}</a></div>
     <div class="card-meta">
       <div class="meta-item"><span class="meta-label">公告日期</span><span class="meta-value">${esc(getDate(r)||'–')}</span></div>
-      <div class="meta-item"><span class="meta-label">公告金額</span><span class="meta-value price">${getBudget(r)}</span></div>
+      <div class="meta-item"><span class="meta-label">公告金額</span><span class="meta-value price">${fmtMoney(r.price||r.budget)}</span></div>
       ${method?`<div class="meta-item"><span class="meta-label">招標方式</span><span class="meta-value">${esc(method)}</span></div>`:''}
       ${unit?`<div class="meta-item"><span class="meta-label">機關</span><span class="meta-value">${esc(unit)}</span></div>`:''}
     </div>
@@ -474,31 +427,29 @@ function cardTender(r) {
   </div>`;
 }
 
-function go(p) { if(currentTab==='awarded')awardedPage=p;else tenderPage=p; renderResults(); window.scrollTo({top:0,behavior:'smooth'}); }
-function switchTab(t) { currentTab=t; if(t==='awarded')awardedPage=1;else tenderPage=1; updateTabs(); renderResults(); }
-function updateTabs() {
-  document.getElementById('tab-awarded').classList.toggle('active', currentTab==='awarded');
-  document.getElementById('tab-tender').classList.toggle('active',  currentTab==='tender');
+function go(p){if(currentTab==='awarded')awardedPage=p;else tenderPage=p;renderResults();window.scrollTo({top:0,behavior:'smooth'});}
+function switchTab(t){currentTab=t;if(t==='awarded')awardedPage=1;else tenderPage=1;updateTabs();renderResults();}
+function updateTabs(){
+  document.getElementById('tab-awarded').classList.toggle('active',currentTab==='awarded');
+  document.getElementById('tab-tender').classList.toggle('active',currentTab==='tender');
 }
-function showError(msg) {
-  document.getElementById('resultsArea').innerHTML = `<div class="state-box">
-    <div class="state-icon">⚠️</div>
-    <div class="state-text">查詢失敗</div>
+function showError(msg){
+  document.getElementById('resultsArea').innerHTML=`<div class="state-box">
+    <div class="state-icon">⚠️</div><div class="state-text">查詢失敗</div>
     <div class="state-sub">${esc(msg)}</div>
   </div>`;
 }
-function resetSearch() {
-  ['queryInput','companyInput'].forEach(id => document.getElementById(id).value='');
+function resetSearch(){
+  ['queryInput','companyInput'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('yearSelect').value='';
   document.getElementById('tabsBar').style.display='none';
-  awardedData=[]; tenderData=[];
+  awardedData=[];tenderData=[];
   document.getElementById('resultsArea').innerHTML=`<div class="state-box">
-    <div class="state-icon">🔍</div>
-    <div class="state-text">輸入關鍵字開始搜尋</div>
+    <div class="state-icon">🔍</div><div class="state-text">輸入關鍵字開始搜尋</div>
     <div class="state-sub">標案關鍵字 ／ 廠商名稱 ／ 年份 可單獨或組合使用</div>
   </div>`;
 }
-document.addEventListener('keydown', e => { if(e.key==='Enter'&&!document.getElementById('searchBtn').disabled) doSearch(); });
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&!document.getElementById('searchBtn').disabled)doSearch();});
 </script>
 </body>
 </html>
