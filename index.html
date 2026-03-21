@@ -30,23 +30,17 @@
   header h1 { font-size: 22px; font-weight: 700; letter-spacing: 2px; }
   header p { font-size: 11px; opacity: 0.4; font-family: 'Space Mono', monospace; margin-top: 4px; }
 
-  .conn-bar {
-    padding: 8px 32px; font-family: 'Space Mono', monospace; font-size: 11px;
-    display: flex; align-items: center; gap: 8px;
-    background: #fff3cd; border-bottom: 1px solid #ffc107; color: #856404;
-    transition: all 0.3s;
-  }
-  .conn-bar.ok  { background: #d1e7dd; border-color: #a3cfbb; color: #0f5132; }
-  .conn-bar.err { background: #f8d7da; border-color: #f5c2c7; color: #842029; }
-  .conn-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
-
   .search-panel {
     background: var(--card-bg); border-bottom: 1px solid var(--border);
     padding: 22px 32px; box-shadow: var(--shadow);
   }
   .search-grid {
-    display: grid; grid-template-columns: 1fr 1fr 140px;
-    gap: 10px; align-items: end; max-width: 820px; margin-bottom: 10px;
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 10px; max-width: 820px; margin-bottom: 12px;
+  }
+  .search-grid-2 {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px; max-width: 820px; margin-bottom: 12px;
   }
   .field-group label {
     display: block; font-size: 10px; font-family: 'Space Mono', monospace;
@@ -126,11 +120,6 @@
   .meta-value { color: var(--ink); font-weight: 600; font-size: 13px; }
   .meta-value.price { color: var(--accent); font-family: 'Space Mono', monospace; }
   .meta-value.company { color: #1a5276; }
-  .card-spec {
-    background: #f7f4ee; border-radius: 4px; padding: 8px 12px;
-    font-size: 12px; color: #555; line-height: 1.7; border-left: 3px solid var(--border);
-  }
-  .spec-label { font-family: 'Space Mono', monospace; font-size: 9px; color: var(--muted); margin-bottom: 2px; }
 
   .state-box { text-align: center; padding: 60px 20px; color: var(--muted); }
   .state-icon { font-size: 44px; margin-bottom: 12px; opacity: 0.35; }
@@ -157,8 +146,8 @@
   .notice { font-family: 'Space Mono', monospace; font-size: 10px; color: #bbb; text-align: center; padding: 14px 0 0; }
 
   @media (max-width: 640px) {
-    header, .search-panel, .conn-bar, .status-strip, .tabs-bar, .results-area { padding-left: 14px; padding-right: 14px; }
-    .search-grid { grid-template-columns: 1fr 1fr; }
+    header, .search-panel, .status-strip, .tabs-bar, .results-area { padding-left: 14px; padding-right: 14px; }
+    .search-grid, .search-grid-2 { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -167,36 +156,35 @@
 <header>
   <div class="badge">GOV PROCUREMENT · TW</div>
   <h1>政府採購查詢系統</h1>
-  <p>資料來源：政府電子採購網 pcc.mlwmlw.org</p>
+  <p>資料來源：政府電子採購網 web.pcc.gov.tw（官方）</p>
 </header>
-
-<div class="conn-bar" id="connBar">
-  <div class="conn-dot"></div>
-  <span id="connText">檢測 API 連線中…</span>
-</div>
 
 <div class="search-panel">
   <div class="search-grid">
     <div class="field-group">
-      <label>標案關鍵字（選填）</label>
-      <input type="text" id="queryInput" placeholder="例：資訊系統、道路工程" />
+      <label>標案名稱關鍵字（選填）</label>
+      <input type="text" id="tenderName" placeholder="例：資訊系統、道路工程" />
     </div>
     <div class="field-group">
-      <label>廠商名稱（選填）</label>
-      <input type="text" id="companyInput" placeholder="例：正茂生物、中華電信" />
+      <label>廠商名稱（選填，模糊）</label>
+      <input type="text" id="companyName" placeholder="例：正茂生物、中華電信" />
+    </div>
+  </div>
+  <div class="search-grid-2">
+    <div class="field-group">
+      <label>開始日期</label>
+      <input type="date" id="startDate" />
     </div>
     <div class="field-group">
-      <label>年份篩選</label>
-      <select id="yearSelect">
-        <option value="">全部年份</option>
-        <option value="2025">2025</option>
-        <option value="2024">2024</option>
-        <option value="2023">2023</option>
-        <option value="2022">2022</option>
-        <option value="2021">2021</option>
-        <option value="2020">2020</option>
-        <option value="2019">2019</option>
-        <option value="2018">2018</option>
+      <label>結束日期</label>
+      <input type="date" id="endDate" />
+    </div>
+    <div class="field-group">
+      <label>每頁筆數</label>
+      <select id="pageSize">
+        <option value="20">20 筆</option>
+        <option value="50">50 筆</option>
+        <option value="100">100 筆</option>
       </select>
     </div>
   </div>
@@ -204,7 +192,7 @@
     <button class="btn btn-primary" id="searchBtn" onclick="doSearch()">搜　尋</button>
     <button class="btn btn-ghost" onclick="resetSearch()">清除</button>
   </div>
-  <div class="hint">💡 廠商名稱支援<span>模糊搜尋</span>（輸入部分名稱即可）；標案可用<span>空格</span>分隔多個關鍵字</div>
+  <div class="hint" style="margin-top:10px">💡 廠商名稱輸入<span>部分名稱</span>即可模糊搜尋；日期留空則搜尋全部</div>
 </div>
 
 <div class="status-strip" id="statusStrip">
@@ -225,33 +213,23 @@
   <div class="state-box">
     <div class="state-icon">🔍</div>
     <div class="state-text">輸入關鍵字開始搜尋</div>
-    <div class="state-sub">標案關鍵字 ／ 廠商名稱 ／ 年份 可單獨或組合使用</div>
+    <div class="state-sub">標案名稱 ／ 廠商名稱 ／ 日期 可單獨或組合使用</div>
   </div>
 </div>
 
 <script>
-// proxy 路徑：/api/proxy/keyword/xxx → Vercel function → pcc.mlwmlw.org/api/keyword/xxx
 const PROXY = '/api/proxy';
-const PAGE_SIZE = 10;
 let currentTab = 'awarded';
 let awardedData = [], tenderData = [];
 let awardedPage = 1, tenderPage = 1;
+let totalAwarded = 0, totalTender = 0;
+const PAGE_SIZE_VAL = () => Number(document.getElementById('pageSize').value) || 20;
 
-async function checkConn() {
-  const bar = document.getElementById('connBar');
-  const txt = document.getElementById('connText');
-  try {
-    const r = await fetch(`${PROXY}/keyword/test`, { signal: AbortSignal.timeout(8000) });
-    if (r.ok || r.status === 404 || r.status === 200) {
-      bar.className = 'conn-bar ok';
-      txt.textContent = '✓ API 連線正常，可以開始搜尋';
-    } else throw new Error('HTTP ' + r.status);
-  } catch(e) {
-    bar.className = 'conn-bar err';
-    txt.textContent = '✗ 無法連線 — 請確認網頁是透過 Vercel 網址開啟（不是 GitHub Pages）';
-  }
-}
-checkConn();
+// Set default dates to current year
+const now = new Date();
+const y = now.getFullYear();
+document.getElementById('startDate').value = `${y}-01-01`;
+document.getElementById('endDate').value   = `${y}-12-31`;
 
 function setLoading(on) {
   document.getElementById('loadingBar').classList.toggle('active', on);
@@ -261,192 +239,226 @@ function setLoading(on) {
 }
 function setStatus(msg) { document.getElementById('statusText').textContent = msg; }
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function cut(s,n) { s=String(s||''); return s.length>n?s.slice(0,n)+'…':s; }
 function fmtMoney(n) { const m=Number(n); return(!m||isNaN(m))?'–':'$ '+m.toLocaleString('zh-TW')+' 元'; }
-
-function getTitle(r)   { return r.title||r.name||''; }
-function getDate(r)    { return r.date||r.start_date||''; }
-function getUnit(r)    { return r.unit||r.unit_name||''; }
-function getSpec(r)    { return r.brief||r.description||r.spec||''; }
-function getMethod(r)  { return r.method||r.procurement_method||''; }
-function isAwarded(r)  {
-  const t = String(r.type||r.category||'').toLowerCase();
-  return t.includes('決標') || t==='awarding' || t==='award';
-}
-function getAmount(r) {
-  if (r.merchants?.length) {
-    const total = r.merchants.reduce((s,m)=>s+Number(m.amount||0),0);
-    if (total>0) return fmtMoney(total);
-  }
-  return fmtMoney(r.price||r.budget||r.amount);
-}
-function getCompanies(r) {
-  if (r.merchants?.length) return r.merchants.map(m=>m.name||'').filter(Boolean).join('、');
-  return r.merchant||r.company||'';
-}
-function getLink(r) {
-  if (r.url) return r.url;
-  if (r.unit_id&&r.job_number)
-    return `https://web.pcc.gov.tw/tps/pss/tender.do?newEdit=false&searchMode=common&pk=${encodeURIComponent(r.unit_id+r.job_number)}`;
-  if (r.id) return `https://pcc.mlwmlw.org/tender/${encodeURIComponent(r.unit||'')}/${r.id}`;
-  return '#';
+function fmtDate(s) {
+  if (!s) return '–';
+  // Handle formats: 20240101, 2024/01/01, 2024-01-01
+  const str = String(s).replace(/\//g,'-');
+  if (str.length === 8) return `${str.slice(0,4)}-${str.slice(4,6)}-${str.slice(6,8)}`;
+  return str;
 }
 
-async function apiFetch(url) {
-  const r = await fetch(url, { signal: AbortSignal.timeout(12000) });
+async function apiFetch(params, type) {
+  const q = new URLSearchParams({ ...params, type });
+  const r = await fetch(`${PROXY}?${q.toString()}`, { signal: AbortSignal.timeout(15000) });
   if (!r.ok) throw new Error('HTTP ' + r.status);
   const text = await r.text();
-  try { return JSON.parse(text); } catch { return []; }
+  try { return JSON.parse(text); } catch(e) {
+    console.error('Parse error, raw:', text.slice(0, 300));
+    throw new Error('回應格式錯誤，請稍後再試');
+  }
+}
+
+function buildParams() {
+  const p = {};
+  const tenderName  = document.getElementById('tenderName').value.trim();
+  const companyName = document.getElementById('companyName').value.trim();
+  const startDate   = document.getElementById('startDate').value;
+  const endDate     = document.getElementById('endDate').value;
+  const pageSize    = PAGE_SIZE_VAL();
+
+  if (tenderName)  p.tenderName  = tenderName;
+  if (companyName) p.companyName = companyName;
+  if (startDate)   p.startDate   = startDate.replace(/-/g, '/');
+  if (endDate)     p.endDate     = endDate.replace(/-/g, '/');
+  p.pageSize  = pageSize;
+  p.pageIndex = 1;
+  return p;
 }
 
 async function doSearch() {
-  const rawQ    = document.getElementById('queryInput').value.trim();
-  const company = document.getElementById('companyInput').value.trim();
-  const year    = document.getElementById('yearSelect').value;
-  if (!rawQ&&!company) { alert('請輸入標案關鍵字或廠商名稱'); return; }
+  const tenderName  = document.getElementById('tenderName').value.trim();
+  const companyName = document.getElementById('companyName').value.trim();
+  if (!tenderName && !companyName) { alert('請輸入標案名稱或廠商名稱'); return; }
 
   setLoading(true);
   awardedData=[]; tenderData=[];
   awardedPage=1; tenderPage=1;
 
   try {
-    const tokens = rawQ.split(/\s+/).filter(Boolean);
-    let raw = [];
-    const seen = new Set();
+    const params = buildParams();
 
-    function merge(rows) {
-      if (!Array.isArray(rows)) return;
-      for (const r of rows) {
-        const k = r.id || r.title;
-        if (k && seen.has(k)) continue;
-        if (k) seen.add(k);
-        raw.push(r);
-      }
+    // Fetch both award and tender in parallel
+    setStatus('查詢決標與招標公告中…');
+    const [awardRes, tenderRes] = await Promise.allSettled([
+      apiFetch(params, 'award'),
+      apiFetch(params, 'tender'),
+    ]);
+
+    // Parse awarded results
+    if (awardRes.status === 'fulfilled') {
+      const d = awardRes.value;
+      // API may return: { totalCount, records: [...] } or { data: [...] } or [...]
+      awardedData = d?.records || d?.data || d?.tenderList || d?.list || (Array.isArray(d) ? d : []);
+      totalAwarded = d?.totalCount || d?.total || awardedData.length;
+    } else {
+      console.warn('Award fetch failed:', awardRes.reason);
     }
 
-    if (rawQ) {
-      setStatus(`搜尋標案「${tokens[0]}」…`);
-      try {
-        const d = await apiFetch(`${PROXY}/keyword/${encodeURIComponent(tokens[0])}`);
-        merge(Array.isArray(d) ? d : (d.data||d.records||[]));
-      } catch(e) { console.warn('title search:', e.message); }
+    // Parse tender results
+    if (tenderRes.status === 'fulfilled') {
+      const d = tenderRes.value;
+      tenderData = d?.records || d?.data || d?.tenderList || d?.list || (Array.isArray(d) ? d : []);
+      totalTender = d?.totalCount || d?.total || tenderData.length;
+    } else {
+      console.warn('Tender fetch failed:', tenderRes.reason);
     }
 
-    if (company) {
-      setStatus(`搜尋廠商「${company}」…`);
-      try {
-        const d = await apiFetch(`${PROXY}/keyword/${encodeURIComponent(company)}`);
-        merge(Array.isArray(d) ? d : (d.data||d.records||[]));
-      } catch(e) { console.warn('company search:', e.message); }
-    }
-
-    setStatus('套用篩選條件…');
-    const filtered = raw.filter(r => {
-      const blob = JSON.stringify(r).toLowerCase();
-      for (const t of tokens) { if (!blob.includes(t.toLowerCase())) return false; }
-      if (company && !blob.includes(company.toLowerCase())) return false;
-      if (year && !String(getDate(r)).includes(year)) return false;
-      return true;
-    });
-
-    awardedData = filtered.filter(r =>  isAwarded(r));
-    tenderData  = filtered.filter(r => !isAwarded(r));
-
-    document.getElementById('awardedCount').textContent = awardedData.length;
-    document.getElementById('tenderCount').textContent  = tenderData.length;
+    document.getElementById('awardedCount').textContent = totalAwarded || awardedData.length;
+    document.getElementById('tenderCount').textContent  = totalTender  || tenderData.length;
     document.getElementById('tabsBar').style.display = 'flex';
-    currentTab = (awardedData.length===0&&tenderData.length>0)?'tender':'awarded';
+
+    currentTab = (awardedData.length===0 && tenderData.length>0) ? 'tender' : 'awarded';
     updateTabs();
     renderResults();
 
   } catch(e) {
-    showError('搜尋失敗：'+e.message);
+    showError(e.message);
   } finally {
     setLoading(false);
   }
 }
 
+// ── Field extractors — handles official PCC API response format ────────────
+// Official API fields (based on web.pcc.gov.tw structure):
+function T(r, ...keys) {
+  for (const k of keys) { if (r[k] !== undefined && r[k] !== null && r[k] !== '') return r[k]; }
+  return '';
+}
+function getTitle(r)     { return T(r,'tenderName','title','name'); }
+function getDate(r)      { return fmtDate(T(r,'tenderAwardDate','awardDate','tenderOpenDate','publishDate','date')); }
+function getOrg(r)       { return T(r,'orgName','unitName','unit','organization'); }
+function getCompany(r)   {
+  // Award records often have merchants/companies array
+  if (r.merchants?.length) return r.merchants.map(m=>m.name||m.merchantName||'').filter(Boolean).join('、');
+  if (r.companies?.length) return r.companies.map(c=>c.name||'').filter(Boolean).join('、');
+  return T(r,'companyName','merchantName','vendor','company');
+}
+function getAmount(r) {
+  const n = Number(T(r,'tenderAwardPrice','awardPrice','totalPrice','price','budget','tenderBudgetPrice'));
+  return fmtMoney(n);
+}
+function getBudget(r) {
+  const n = Number(T(r,'tenderBudgetPrice','budget','price','tenderBasePrice'));
+  return fmtMoney(n);
+}
+function getMethod(r)    { return T(r,'tenderWay','procurementMethod','tenderMethod','method'); }
+function getLink(r) {
+  const id = T(r,'tenderId','tenderID','id');
+  const unit = T(r,'orgId','unitId','unit_id');
+  const job = T(r,'jobNumber','job_number','tenderCaseNo');
+  if (id) return `https://web.pcc.gov.tw/prkms/tender/common/basicSearch/readTenderBasic?tenderCaseNo=${encodeURIComponent(id)}`;
+  if (unit && job) return `https://web.pcc.gov.tw/tps/pss/tender.do?newEdit=false&searchMode=common&pk=${encodeURIComponent(unit+job)}`;
+  return '#';
+}
+
 function renderResults() {
-  const data = currentTab==='awarded'?awardedData:tenderData;
-  const page = currentTab==='awarded'?awardedPage:tenderPage;
+  const data = currentTab==='awarded' ? awardedData : tenderData;
+  const page = currentTab==='awarded' ? awardedPage : tenderPage;
+  const total = currentTab==='awarded' ? totalAwarded : totalTender;
   const area = document.getElementById('resultsArea');
+
   if (!data.length) {
     area.innerHTML=`<div class="state-box">
       <div class="state-icon">${currentTab==='awarded'?'📋':'📢'}</div>
       <div class="state-text">無符合的${currentTab==='awarded'?'決標':'招標'}公告</div>
-      <div class="state-sub">可切換頁籤或調整關鍵字再試</div>
+      <div class="state-sub">可切換頁籤或調整搜尋條件再試</div>
     </div>`; return;
   }
-  const start=(page-1)*PAGE_SIZE, slice=data.slice(start,start+PAGE_SIZE);
-  const total=Math.ceil(data.length/PAGE_SIZE);
+
   let html=`<div class="section-header">
     <span class="section-title">${currentTab==='awarded'?'✦ 決標公告':'◈ 招標公告'}</span>
-    <span class="section-meta">共 ${data.length} 筆 ／ 第 ${page}/${total} 頁</span>
+    <span class="section-meta">共 ${total||data.length} 筆 ／ 第 ${page} 頁</span>
   </div>`;
-  slice.forEach(r=>{ html+=currentTab==='awarded'?cardAwarded(r):cardTender(r); });
-  if (total>1) {
-    html+=`<div class="pagination">`;
-    html+=`<button class="page-btn" onclick="go(${page-1})" ${page<=1?'disabled':''}>←</button>`;
-    let dot=false;
-    for(let i=1;i<=total;i++){
-      if(i===1||i===total||Math.abs(i-page)<=2){dot=false;html+=`<button class="page-btn ${i===page?'active':''}" onclick="go(${i})">${i}</button>`;}
-      else if(!dot){dot=true;html+=`<span style="padding:0 4px;color:var(--muted)">…</span>`;}
-    }
-    html+=`<button class="page-btn" onclick="go(${page+1})" ${page>=total?'disabled':''}>→</button></div>`;
-  }
-  html+=`<div class="notice">資料來源：pcc.mlwmlw.org ／ 政府電子採購網 ／ 僅供參考，請以官方網站為準</div>`;
+
+  data.forEach(r=>{ html += currentTab==='awarded' ? cardAwarded(r) : cardTender(r); });
+
+  html+=`<div class="pagination">`;
+  if (page > 1) html+=`<button class="page-btn" onclick="changePage(${page-1})">← 上一頁</button>`;
+  html+=`<span style="font-family:'Space Mono',monospace;font-size:12px;color:var(--muted);padding:0 8px">第 ${page} 頁</span>`;
+  if (data.length >= PAGE_SIZE_VAL()) html+=`<button class="page-btn" onclick="changePage(${page+1})">下一頁 →</button>`;
+  html+=`</div>`;
+
+  html+=`<div class="notice">資料來源：政府電子採購網 web.pcc.gov.tw ／ 僅供參考，請以官方網站為準</div>`;
   area.innerHTML=html;
 }
 
 function cardAwarded(r) {
-  const cos=getCompanies(r), spec=getSpec(r), unit=getUnit(r);
+  const co = getCompany(r), org = getOrg(r);
   return `<div class="card card-awarded">
     <span class="card-tag tag-awarded">決　標</span>
     <div class="card-title"><a href="${esc(getLink(r))}" target="_blank">${esc(getTitle(r)||'(無標題)')}</a></div>
     <div class="card-meta">
-      <div class="meta-item"><span class="meta-label">決標日期</span><span class="meta-value">${esc(getDate(r)||'–')}</span></div>
+      <div class="meta-item"><span class="meta-label">決標日期</span><span class="meta-value">${esc(getDate(r))}</span></div>
       <div class="meta-item"><span class="meta-label">決標金額</span><span class="meta-value price">${getAmount(r)}</span></div>
-      <div class="meta-item"><span class="meta-label">決標廠商</span><span class="meta-value company">${esc(cos||'–')}</span></div>
-      ${unit?`<div class="meta-item"><span class="meta-label">機關</span><span class="meta-value">${esc(unit)}</span></div>`:''}
+      <div class="meta-item"><span class="meta-label">決標廠商</span><span class="meta-value company">${esc(co||'–')}</span></div>
+      ${org?`<div class="meta-item"><span class="meta-label">機關</span><span class="meta-value">${esc(org)}</span></div>`:''}
     </div>
-    ${spec?`<div class="card-spec"><div class="spec-label">規格摘要</div>${esc(cut(spec,280))}</div>`:''}
   </div>`;
 }
 function cardTender(r) {
-  const spec=getSpec(r), unit=getUnit(r), method=getMethod(r);
+  const org=getOrg(r), method=getMethod(r);
   return `<div class="card card-tender">
     <span class="card-tag tag-tender">招　標</span>
     <div class="card-title"><a href="${esc(getLink(r))}" target="_blank">${esc(getTitle(r)||'(無標題)')}</a></div>
     <div class="card-meta">
-      <div class="meta-item"><span class="meta-label">公告日期</span><span class="meta-value">${esc(getDate(r)||'–')}</span></div>
-      <div class="meta-item"><span class="meta-label">公告金額</span><span class="meta-value price">${fmtMoney(r.price||r.budget)}</span></div>
+      <div class="meta-item"><span class="meta-label">公告日期</span><span class="meta-value">${esc(getDate(r))}</span></div>
+      <div class="meta-item"><span class="meta-label">預算金額</span><span class="meta-value price">${getBudget(r)}</span></div>
       ${method?`<div class="meta-item"><span class="meta-label">招標方式</span><span class="meta-value">${esc(method)}</span></div>`:''}
-      ${unit?`<div class="meta-item"><span class="meta-label">機關</span><span class="meta-value">${esc(unit)}</span></div>`:''}
+      ${org?`<div class="meta-item"><span class="meta-label">機關</span><span class="meta-value">${esc(org)}</span></div>`:''}
     </div>
-    ${spec?`<div class="card-spec"><div class="spec-label">規格摘要</div>${esc(cut(spec,280))}</div>`:''}
   </div>`;
 }
 
-function go(p){if(currentTab==='awarded')awardedPage=p;else tenderPage=p;renderResults();window.scrollTo({top:0,behavior:'smooth'});}
-function switchTab(t){currentTab=t;if(t==='awarded')awardedPage=1;else tenderPage=1;updateTabs();renderResults();}
-function updateTabs(){
+async function changePage(p) {
+  if (currentTab==='awarded') awardedPage=p; else tenderPage=p;
+  setLoading(true);
+  setStatus(`載入第 ${p} 頁…`);
+  try {
+    const params = { ...buildParams(), pageIndex: p };
+    const d = await apiFetch(params, currentTab==='awarded'?'award':'tender');
+    const list = d?.records||d?.data||d?.tenderList||d?.list||(Array.isArray(d)?d:[]);
+    if (currentTab==='awarded') { awardedData=list; totalAwarded=d?.totalCount||d?.total||list.length; }
+    else { tenderData=list; totalTender=d?.totalCount||d?.total||list.length; }
+    document.getElementById('awardedCount').textContent = totalAwarded||awardedData.length;
+    document.getElementById('tenderCount').textContent  = totalTender||tenderData.length;
+    renderResults();
+    window.scrollTo({top:0,behavior:'smooth'});
+  } catch(e) { showError(e.message); }
+  finally { setLoading(false); }
+}
+
+function switchTab(t) { currentTab=t; if(t==='awarded')awardedPage=1;else tenderPage=1; updateTabs(); renderResults(); }
+function updateTabs() {
   document.getElementById('tab-awarded').classList.toggle('active',currentTab==='awarded');
   document.getElementById('tab-tender').classList.toggle('active',currentTab==='tender');
 }
-function showError(msg){
+function showError(msg) {
   document.getElementById('resultsArea').innerHTML=`<div class="state-box">
     <div class="state-icon">⚠️</div><div class="state-text">查詢失敗</div>
     <div class="state-sub">${esc(msg)}</div>
   </div>`;
 }
-function resetSearch(){
-  ['queryInput','companyInput'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('yearSelect').value='';
+function resetSearch() {
+  document.getElementById('tenderName').value='';
+  document.getElementById('companyName').value='';
+  document.getElementById('startDate').value=`${y}-01-01`;
+  document.getElementById('endDate').value=`${y}-12-31`;
   document.getElementById('tabsBar').style.display='none';
   awardedData=[];tenderData=[];
   document.getElementById('resultsArea').innerHTML=`<div class="state-box">
     <div class="state-icon">🔍</div><div class="state-text">輸入關鍵字開始搜尋</div>
-    <div class="state-sub">標案關鍵字 ／ 廠商名稱 ／ 年份 可單獨或組合使用</div>
+    <div class="state-sub">標案名稱 ／ 廠商名稱 ／ 日期 可單獨或組合使用</div>
   </div>`;
 }
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&!document.getElementById('searchBtn').disabled)doSearch();});
