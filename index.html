@@ -9,11 +9,10 @@
   :root {
     --ink: #1a1a2e; --paper: #f5f0e8; --accent: #c0392b;
     --muted: #7a7a8a; --border: #d0c8b8; --card-bg: #fdfaf4;
-    --blue: #2471a3; --green: #1e8449; --shadow: 0 2px 12px rgba(26,26,46,0.08);
+    --blue: #2471a3; --shadow: 0 2px 12px rgba(26,26,46,0.08);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Noto Serif TC', serif; background: var(--paper); color: var(--ink); min-height: 100vh; }
-
   header {
     background: var(--ink); color: var(--paper);
     padding: 22px 32px 18px; border-bottom: 4px solid var(--accent);
@@ -31,10 +30,9 @@
   header h1 { font-size: 22px; font-weight: 700; letter-spacing: 2px; }
   header p { font-size: 11px; opacity: 0.4; font-family: 'Space Mono', monospace; margin-top: 4px; }
 
-  /* API Key panel */
   .key-panel {
     background: #1a1a2e; border-bottom: 1px solid #2c2c4a;
-    padding: 14px 32px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    padding: 12px 32px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
   }
   .key-label { font-family: 'Space Mono', monospace; font-size: 11px; color: #8888aa; white-space: nowrap; }
   .key-input {
@@ -44,13 +42,11 @@
     font-size: 12px; outline: none; transition: border-color 0.2s;
   }
   .key-input:focus { border-color: var(--accent); color: #fff; }
-  .key-status { font-family: 'Space Mono', monospace; font-size: 11px; }
-  .key-status.ok  { color: #2ecc71; }
-  .key-status.err { color: #e74c3c; }
+  .key-ok  { font-family: 'Space Mono', monospace; font-size: 11px; color: #2ecc71; }
+  .key-err { font-family: 'Space Mono', monospace; font-size: 11px; color: #e74c3c; }
   .key-hint { font-family: 'Space Mono', monospace; font-size: 10px; color: #555577; }
   .key-hint a { color: #7777bb; }
 
-  /* Search panel */
   .search-panel {
     background: var(--card-bg); border-bottom: 1px solid var(--border);
     padding: 22px 32px; box-shadow: var(--shadow);
@@ -72,8 +68,7 @@
   .btn-row { display: flex; gap: 8px; }
   .btn {
     padding: 9px 20px; font-family: 'Noto Serif TC', serif; font-size: 14px;
-    font-weight: 700; border: none; border-radius: 4px; cursor: pointer;
-    transition: all 0.15s; white-space: nowrap;
+    font-weight: 700; border: none; border-radius: 4px; cursor: pointer; transition: all 0.15s; white-space: nowrap;
   }
   .btn-primary { background: var(--accent); color: #fff; }
   .btn-primary:hover { background: #a93226; }
@@ -82,7 +77,6 @@
   .hint { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--muted); margin-top: 8px; }
   .hint span { color: var(--accent); }
 
-  /* Status */
   .status-strip {
     display: none; padding: 10px 32px; background: #fff8e1;
     border-bottom: 1px solid #ffe082; font-family: 'Space Mono', monospace;
@@ -92,7 +86,6 @@
   .spinner { width: 13px; height: 13px; border: 2px solid #ccc; border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; flex-shrink: 0; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* Tabs */
   .tabs-bar { padding: 0 32px; background: var(--card-bg); border-bottom: 2px solid var(--border); display: flex; }
   .tab-btn {
     padding: 11px 20px; font-family: 'Noto Serif TC', serif; font-size: 13px; font-weight: 700;
@@ -107,7 +100,6 @@
   }
   .tab-btn.active .count-badge { background: var(--accent); color: #fff; }
 
-  /* Results */
   .results-area { padding: 22px 32px; max-width: 1040px; }
   .section-header {
     display: flex; align-items: baseline; gap: 10px;
@@ -175,11 +167,10 @@
   <p>資料來源：政府電子採購網 ／ AI 智能搜尋</p>
 </header>
 
-<!-- API Key input -->
 <div class="key-panel">
   <span class="key-label">🔑 Claude API Key</span>
   <input type="password" class="key-input" id="apiKey" placeholder="sk-ant-api03-..." autocomplete="off" oninput="onKeyInput()" />
-  <span class="key-status" id="keyStatus"></span>
+  <span id="keyStatus"></span>
   <span class="key-hint">沒有 Key？<a href="https://console.anthropic.com/" target="_blank">免費申請 →</a>　Key 只存在瀏覽器，不會上傳到任何伺服器</span>
 </div>
 
@@ -210,12 +201,12 @@
     <button class="btn btn-primary" id="searchBtn" onclick="doSearch()">搜　尋</button>
     <button class="btn btn-ghost" onclick="resetSearch()">清除</button>
   </div>
-  <div class="hint">💡 廠商名稱支援<span>模糊搜尋</span>（輸入部分名稱即可）；由 Claude AI 搜尋整理，結果更準確</div>
+  <div class="hint">💡 廠商名稱支援<span>模糊搜尋</span>（輸入部分名稱即可）</div>
 </div>
 
 <div class="status-strip" id="statusStrip">
   <div class="spinner"></div>
-  <span id="statusText">AI 搜尋中，請稍候（約 15-30 秒）…</span>
+  <span id="statusText">AI 搜尋中，請稍候（約 20-30 秒）…</span>
 </div>
 
 <div class="tabs-bar" id="tabsBar" style="display:none">
@@ -242,20 +233,18 @@ let awardedData = [], tenderData = [];
 
 function onKeyInput() {
   const key = document.getElementById('apiKey').value.trim();
-  const st = document.getElementById('keyStatus');
-  if (!key) { st.textContent = ''; st.className = 'key-status'; return; }
+  const st  = document.getElementById('keyStatus');
+  if (!key) { st.textContent=''; st.className=''; return; }
   if (key.startsWith('sk-ant-')) {
-    st.textContent = '✓ 格式正確'; st.className = 'key-status ok';
+    st.textContent='✓ 格式正確'; st.className='key-ok';
   } else {
-    st.textContent = '✗ 格式不正確（應以 sk-ant- 開頭）'; st.className = 'key-status err';
+    st.textContent='✗ 格式不正確'; st.className='key-err';
   }
-  localStorage.setItem('pcc_api_key', key);
+  localStorage.setItem('pcc_key', key);
 }
-
-// Restore saved key
 window.addEventListener('load', () => {
-  const saved = localStorage.getItem('pcc_api_key');
-  if (saved) { document.getElementById('apiKey').value = saved; onKeyInput(); }
+  const k = localStorage.getItem('pcc_key');
+  if (k) { document.getElementById('apiKey').value=k; onKeyInput(); }
 });
 
 function setLoading(on) {
@@ -267,57 +256,74 @@ function setLoading(on) {
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function fmtMoney(n) { const m=Number(n); return(!m||isNaN(m))?'–':'$ '+m.toLocaleString('zh-TW')+' 元'; }
 
-async function doSearch() {
-  const apiKey     = document.getElementById('apiKey').value.trim();
-  const query      = document.getElementById('queryInput').value.trim();
-  const company    = document.getElementById('companyInput').value.trim();
-  const year       = document.getElementById('yearSelect').value;
+// ── Parse records from Claude's response text ──────────────────────────────
+function parseRecords(text) {
+  if (!text) return [];
 
-  if (!apiKey) { alert('請先輸入 Claude API Key'); document.getElementById('apiKey').focus(); return; }
+  // Try <r>...</r> tag first
+  const tagMatch = text.match(/<r>([\s\S]*?)<\/r>/i);
+  if (tagMatch) {
+    try {
+      const arr = JSON.parse(tagMatch[1].trim());
+      if (Array.isArray(arr) && arr.length) return arr;
+    } catch {}
+  }
+
+  // Try any JSON array in the text
+  // Find all [...] blocks and try to parse each
+  const arrayMatches = text.match(/\[[\s\S]*?\]/g) || [];
+  for (const m of arrayMatches) {
+    try {
+      const arr = JSON.parse(m);
+      if (Array.isArray(arr) && arr.length > 0 && arr[0].title) return arr;
+    } catch {}
+  }
+
+  // Try full JSON object
+  const objMatch = text.match(/\{[\s\S]*\}/);
+  if (objMatch) {
+    try {
+      const obj = JSON.parse(objMatch[0]);
+      if (obj.records) return obj.records;
+      if (obj.data)    return obj.data;
+    } catch {}
+  }
+
+  return [];
+}
+
+async function doSearch() {
+  const apiKey  = document.getElementById('apiKey').value.trim();
+  const query   = document.getElementById('queryInput').value.trim();
+  const company = document.getElementById('companyInput').value.trim();
+  const year    = document.getElementById('yearSelect').value;
+
+  if (!apiKey)              { alert('請先輸入 Claude API Key'); return; }
   if (!apiKey.startsWith('sk-ant-')) { alert('API Key 格式不正確'); return; }
-  if (!query && !company) { alert('請輸入標案關鍵字或廠商名稱'); return; }
+  if (!query && !company)   { alert('請輸入標案關鍵字或廠商名稱'); return; }
 
   setLoading(true);
-  awardedData = []; tenderData = [];
+  awardedData=[]; tenderData=[];
 
   try {
-    const conditions = [];
-    if (query)   conditions.push(`標案名稱包含「${query}」`);
-    if (company) conditions.push(`廠商名稱包含「${company}」（部分名稱即可，例如輸入「正茂」可找到「正茂生物科技股份有限公司」）`);
-    if (year)    conditions.push(`年份為 ${year} 年`);
+    // Build a SHORT, focused prompt to avoid rate limit
+    const parts = [];
+    if (query)   parts.push(`標案名稱含「${query}」`);
+    if (company) parts.push(`廠商含「${company}」`);
+    if (year)    parts.push(`${year}年`);
 
-    const prompt = `請搜尋台灣政府採購網（web.pcc.gov.tw）上符合以下條件的標案：
-${conditions.join('\n')}
+    const searchTerms = [query, company, year].filter(Boolean).join(' ');
 
-搜尋方式：
-1. 搜尋「site:web.pcc.gov.tw ${[query, company, year].filter(Boolean).join(' ')}」
-2. 搜尋「政府採購 ${[query, company, year].filter(Boolean).join(' ')} 決標」
-3. 搜尋「${[query, company, year].filter(Boolean).join(' ')} 採購公告 台灣」
+    const prompt = `搜尋台灣政府採購網標案，條件：${parts.join('、')}
 
-找到資料後，請用以下 JSON 格式回傳，用 <result> 和 </result> 包住：
+請搜尋「${searchTerms} 政府採購 決標 site:pcc.g0v.ronny.tw OR site:web.pcc.gov.tw」
 
-<result>
-[
-  {
-    "type": "awarded",
-    "title": "標案名稱",
-    "date": "決標日期（YYYY-MM-DD）",
-    "amount": 決標金額數字,
-    "companies": ["廠商名稱"],
-    "unit": "機關名稱",
-    "spec": "規格或說明摘要",
-    "link": "原始連結網址"
-  }
-]
-</result>
+找到後用 <r>[...JSON陣列...]</r> 格式回傳，每筆格式：
+{"type":"awarded或tender","title":"標案名","date":"日期","amount":金額數字,"companies":["廠商名"],"unit":"機關","spec":"摘要","link":"網址"}
 
-type 欄位：決標公告用 "awarded"，招標公告用 "tender"
-招標公告額外欄位：method（招標方式）
-amount 為純數字（無單位）
-請盡量找 10-20 筆資料，若找不到資料回傳空陣列 []
-只輸出 <result>...</result> 之間的內容，不要加其他說明`;
+決標用awarded，招標用tender，找不到回傳<r>[]</r>`;
 
-    const response = await fetch(CLAUDE_API, {
+    const resp = await fetch(CLAUDE_API, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -327,42 +333,67 @@ amount 為純數字（無單位）
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 4000,
+        max_tokens: 2000,
         tools: [{ type: 'web_search_20250305', name: 'web_search' }],
         messages: [{ role: 'user', content: prompt }]
       })
     });
 
-    if (!response.ok) {
-      const err = await response.json();
-      throw new Error(err?.error?.message || `API 錯誤 ${response.status}`);
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err?.error?.message || `API 錯誤 ${resp.status}`);
     }
 
-    const data = await response.json();
+    const data = await resp.json();
+    console.log('Claude response:', JSON.stringify(data).slice(0, 500));
 
-    // Extract text from all content blocks
-    const fullText = (data.content || [])
+    // Collect ALL text from response (including after tool use)
+    const allText = (data.content || [])
       .filter(b => b.type === 'text')
       .map(b => b.text)
       .join('\n');
 
-    // Parse <result>...</result>
-    const match = fullText.match(/<result>([\s\S]*?)<\/result>/);
-    let records = [];
-    if (match) {
-      try {
-        const clean = match[1].trim().replace(/```json|```/g, '');
-        records = JSON.parse(clean);
-      } catch(e) {
-        console.warn('Parse error:', e, match[1]);
-      }
-    }
+    console.log('Full text:', allText.slice(0, 800));
 
-    // Fallback: find any JSON array in text
-    if (!records.length) {
-      const arrMatch = fullText.match(/\[[\s\S]*\]/);
-      if (arrMatch) {
-        try { records = JSON.parse(arrMatch[0]); } catch {}
+    let records = parseRecords(allText);
+
+    // If no records yet and stop_reason is tool_use, do a second turn
+    if (!records.length && data.stop_reason === 'tool_use') {
+      const toolUseBlocks = (data.content||[]).filter(b => b.type==='tool_use');
+      const toolResults = toolUseBlocks.map(b => ({
+        type: 'tool_result',
+        tool_use_id: b.id,
+        content: '搜尋完成，請根據搜尋結果整理資料並用 <r>[...JSON...]</r> 格式回傳。'
+      }));
+
+      const resp2 = await fetch(CLAUDE_API, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 2000,
+          tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+          messages: [
+            { role: 'user', content: prompt },
+            { role: 'assistant', content: data.content },
+            { role: 'user', content: toolResults }
+          ]
+        })
+      });
+
+      if (resp2.ok) {
+        const data2 = await resp2.json();
+        const text2 = (data2.content||[])
+          .filter(b => b.type==='text')
+          .map(b => b.text)
+          .join('\n');
+        console.log('Turn 2 text:', text2.slice(0, 800));
+        records = parseRecords(text2);
       }
     }
 
@@ -372,12 +403,12 @@ amount 為純數字（無單位）
     document.getElementById('awardedCount').textContent = awardedData.length;
     document.getElementById('tenderCount').textContent  = tenderData.length;
     document.getElementById('tabsBar').style.display = 'flex';
-
-    currentTab = (awardedData.length === 0 && tenderData.length > 0) ? 'tender' : 'awarded';
+    currentTab = (awardedData.length===0 && tenderData.length>0) ? 'tender' : 'awarded';
     updateTabs();
     renderResults();
 
   } catch(e) {
+    console.error(e);
     showError(e.message);
   } finally {
     setLoading(false);
@@ -385,29 +416,26 @@ amount 為純數字（無單位）
 }
 
 function renderResults() {
-  const data = currentTab === 'awarded' ? awardedData : tenderData;
+  const data = currentTab==='awarded' ? awardedData : tenderData;
   const area = document.getElementById('resultsArea');
-
   if (!data.length) {
-    area.innerHTML = `<div class="state-box">
+    area.innerHTML=`<div class="state-box">
       <div class="state-icon">${currentTab==='awarded'?'📋':'📢'}</div>
       <div class="state-text">無符合的${currentTab==='awarded'?'決標':'招標'}公告</div>
       <div class="state-sub">可切換頁籤或調整關鍵字再試</div>
     </div>`; return;
   }
-
-  let html = `<div class="section-header">
+  let html=`<div class="section-header">
     <span class="section-title">${currentTab==='awarded'?'✦ 決標公告':'◈ 招標公告'}</span>
     <span class="section-meta">共 ${data.length} 筆</span>
   </div>`;
-
-  data.forEach(r => { html += currentTab === 'awarded' ? cardAwarded(r) : cardTender(r); });
-  html += `<div class="notice">資料由 Claude AI 搜尋整理 ／ 資料來源：政府電子採購網 ／ 僅供參考，請以官方網站為準</div>`;
-  area.innerHTML = html;
+  data.forEach(r=>{ html += currentTab==='awarded' ? cardAwarded(r) : cardTender(r); });
+  html+=`<div class="notice">資料由 Claude AI 搜尋整理 ／ 來源：政府電子採購網 ／ 僅供參考</div>`;
+  area.innerHTML=html;
 }
 
 function cardAwarded(r) {
-  const cos = Array.isArray(r.companies) ? r.companies.join('、') : (r.companies||'–');
+  const cos = Array.isArray(r.companies)?r.companies.join('、'):(r.companies||'–');
   return `<div class="card card-awarded">
     <span class="card-tag tag-awarded">決　標</span>
     <div class="card-title"><a href="${esc(r.link||'#')}" target="_blank">${esc(r.title||'(無標題)')}</a></div>
@@ -417,10 +445,9 @@ function cardAwarded(r) {
       <div class="meta-item"><span class="meta-label">決標廠商</span><span class="meta-value company">${esc(cos||'–')}</span></div>
       ${r.unit?`<div class="meta-item"><span class="meta-label">機關</span><span class="meta-value">${esc(r.unit)}</span></div>`:''}
     </div>
-    ${r.spec?`<div class="card-spec">${esc(r.spec.slice(0,250))}</div>`:''}
+    ${r.spec?`<div class="card-spec">${esc(String(r.spec).slice(0,250))}</div>`:''}
   </div>`;
 }
-
 function cardTender(r) {
   return `<div class="card card-tender">
     <span class="card-tag tag-tender">招　標</span>
@@ -431,35 +458,33 @@ function cardTender(r) {
       ${r.method?`<div class="meta-item"><span class="meta-label">招標方式</span><span class="meta-value">${esc(r.method)}</span></div>`:''}
       ${r.unit?`<div class="meta-item"><span class="meta-label">機關</span><span class="meta-value">${esc(r.unit)}</span></div>`:''}
     </div>
-    ${r.spec?`<div class="card-spec">${esc(r.spec.slice(0,250))}</div>`:''}
+    ${r.spec?`<div class="card-spec">${esc(String(r.spec).slice(0,250))}</div>`:''}
   </div>`;
 }
 
-function switchTab(t) { currentTab=t; updateTabs(); renderResults(); }
-function updateTabs() {
-  document.getElementById('tab-awarded').classList.toggle('active', currentTab==='awarded');
-  document.getElementById('tab-tender').classList.toggle('active', currentTab==='tender');
+function switchTab(t){currentTab=t;updateTabs();renderResults();}
+function updateTabs(){
+  document.getElementById('tab-awarded').classList.toggle('active',currentTab==='awarded');
+  document.getElementById('tab-tender').classList.toggle('active',currentTab==='tender');
 }
-function showError(msg) {
-  document.getElementById('resultsArea').innerHTML = `<div class="state-box">
-    <div class="state-icon">⚠️</div>
-    <div class="state-text">查詢失敗</div>
+function showError(msg){
+  document.getElementById('resultsArea').innerHTML=`<div class="state-box">
+    <div class="state-icon">⚠️</div><div class="state-text">查詢失敗</div>
     <div class="state-sub">${esc(msg)}</div>
   </div>`;
 }
-function resetSearch() {
-  ['queryInput','companyInput'].forEach(id => document.getElementById(id).value='');
+function resetSearch(){
+  ['queryInput','companyInput'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('yearSelect').value='';
   document.getElementById('tabsBar').style.display='none';
-  awardedData=[]; tenderData=[];
-  document.getElementById('resultsArea').innerHTML = `<div class="state-box">
-    <div class="state-icon">🔍</div>
-    <div class="state-text">輸入 API Key 與關鍵字開始搜尋</div>
+  awardedData=[];tenderData=[];
+  document.getElementById('resultsArea').innerHTML=`<div class="state-box">
+    <div class="state-icon">🔍</div><div class="state-text">輸入 API Key 與關鍵字開始搜尋</div>
     <div class="state-sub">由 Claude AI 搜尋政府採購網，支援模糊搜尋</div>
   </div>`;
 }
-document.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && !document.getElementById('searchBtn').disabled) doSearch();
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&!document.getElementById('searchBtn').disabled)doSearch();
 });
 </script>
 </body>
