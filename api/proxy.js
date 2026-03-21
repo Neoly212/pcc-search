@@ -6,7 +6,7 @@ export default async function handler(req, res) {
 
   const { type, tenderName, companyName, startDate, endDate, pageIndex } = req.query;
 
-  // Step 1: Get session cookie from the index page
+  // Step 1: Get session cookie
   let cookies = '';
   try {
     const indexPage = await fetch('https://web.pcc.gov.tw/prkms/tender/common/bulletion/indexBulletion', {
@@ -18,14 +18,10 @@ export default async function handler(req, res) {
       signal: AbortSignal.timeout(10000),
     });
     const setCookie = indexPage.headers.get('set-cookie');
-    if (setCookie) {
-      cookies = setCookie.split(';')[0];
-    }
-  } catch(e) {
-    console.error('Session fetch error:', e.message);
-  }
+    if (setCookie) cookies = setCookie.split(';')[0];
+  } catch(e) {}
 
-  // Step 2: POST search form
+  // Step 2: POST search
   const isAward = type === 'award';
   const formData = new URLSearchParams();
   formData.set('searchMethod', isAward ? 'AWARD_DECLARATION' : 'TENDER_DECLARATION');
@@ -38,10 +34,8 @@ export default async function handler(req, res) {
   if (startDate)   formData.set('tenderStartDate', startDate);
   if (endDate)     formData.set('tenderEndDate', endDate);
 
-  const searchUrl = 'https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion';
-
   try {
-    const response = await fetch(searchUrl, {
+    const response = await fetch('https://web.pcc.gov.tw/prkms/tender/common/bulletion/readBulletion', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -58,97 +52,28 @@ export default async function handler(req, res) {
 
     const html = await response.text();
 
-    // Step 3: Parse HTML table into JSON
-    const records = parseHTMLTable(html, isAward);
-    const totalMatch = html.match(/共\s*(\d+)\s*筆/);
-    const total = totalMatch ? parseInt(totalMatch[1]) : records.length;
+    // Return a section of the HTML around where results should be
+    // Look for keywords that indicate results table
+    const markers = ['決標日期', '標案名稱', '得標廠商', '招標方式', '共', '筆', 'tenderList', 'resultList', 'tbody'];
+    const findings = {};
+    for (const m of markers) {
+      const idx = html.indexOf(m);
+      findings[m] = idx === -1 ? 'NOT FOUND' : `found at ${idx}: ...${html.slice(Math.max(0,idx-50), idx+100)}...`;
+    }
+
+    // Extract 2000 chars around first result indicator
+    const resultIdx = html.indexOf('決標日期');
+    const resultSection = resultIdx > -1 ? html.slice(Math.max(0, resultIdx-200), resultIdx+2000) : 'NOT FOUND';
 
     res.setHeader('Content-Type', 'application/json');
     return res.status(200).json({
-      total,
-      records,
-      _debug: {
-        httpStatus: response.status,
-        recordCount: records.length,
-        htmlLength: html.length,
-        htmlPreview: html.slice(0, 200),
-      }
+      httpStatus: response.status,
+      htmlLength: html.length,
+      markers: findings,
+      resultSection,
     });
 
   } catch (error) {
-    res.setHeader('Content-Type', 'application/json');
-    return res.status(500).json({ error: error.message, records: [], total: 0 });
+    return res.status(500).json({ error: error.message });
   }
-}
-
-function parseHTMLTable(html, isAward) {
-  const records = [];
-
-  // Extract table rows - look for <tr> elements with <td> children
-  // PCC site typically has a results table with class or id
-  const tableMatch = html.match(/<table[^>]*class="[^"]*list[^"]*"[^>]*>([\s\S]*?)<\/table>/i)
-    || html.match(/<table[^>]*id="[^"]*result[^"]*"[^>]*>([\s\S]*?)<\/table>/i)
-    || html.match(/<tbody>([\s\S]*?)<\/tbody>/i);
-
-  if (!tableMatch) {
-    // Try to find any table with multiple rows
-    const allTables = html.match(/<table[\s\S]*?<\/table>/gi) || [];
-    for (const table of allTables) {
-      const rows = table.match(/<tr[\s\S]*?<\/tr>/gi) || [];
-      if (rows.length > 2) {
-        return parseRows(rows, isAward);
-      }
-    }
-    return records;
-  }
-
-  const rows = tableMatch[1].match(/<tr[\s\S]*?<\/tr>/gi) || [];
-  return parseRows(rows, isAward);
-}
-
-function parseRows(rows, isAward) {
-  const records = [];
-  // Skip header row (first row)
-  for (let i = 1; i < rows.length; i++) {
-    const row = rows[i];
-    const cells = row.match(/<td[\s\S]*?<\/td>/gi) || [];
-    if (cells.length < 3) continue;
-
-    const getText = (cell) => cell.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').trim();
-    const getLink = (cell) => {
-      const m = cell.match(/href="([^"]+)"/);
-      return m ? (m[1].startsWith('http') ? m[1] : 'https://web.pcc.gov.tw' + m[1]) : '';
-    };
-
-    if (isAward) {
-      // Award columns: 序號, 機關名稱, 標案名稱, 決標日期, 決標金額, 得標廠商
-      records.push({
-        type: 'awarded',
-        unit: getText(cells[1] || ''),
-        title: getText(cells[2] || ''),
-        date: getText(cells[3] || ''),
-        amount: parseAmount(getText(cells[4] || '')),
-        companies: [getText(cells[5] || '')].filter(Boolean),
-        link: getLink(cells[2] || '') || getLink(row),
-      });
-    } else {
-      // Tender columns: 序號, 機關名稱, 標案名稱, 招標方式, 公告日期, 預算金額
-      records.push({
-        type: 'tender',
-        unit: getText(cells[1] || ''),
-        title: getText(cells[2] || ''),
-        method: getText(cells[3] || ''),
-        date: getText(cells[4] || ''),
-        amount: parseAmount(getText(cells[5] || '')),
-        link: getLink(cells[2] || '') || getLink(row),
-      });
-    }
-  }
-  return records.filter(r => r.title && r.title.length > 1);
-}
-
-function parseAmount(str) {
-  if (!str) return 0;
-  const n = Number(str.replace(/[^0-9.]/g, ''));
-  return isNaN(n) ? 0 : n;
 }
